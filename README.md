@@ -99,3 +99,17 @@ You can extend these tests by:
 ## Notes
 
 - DummyJSON is a demo API and may have rate limits
+
+## CI/CD Integration
+
+This project includes GitHub Actions workflow configuration to run tests automatically:
+
+- Tests are executed on every push and pull request to main/master branches
+- CI environment uses modified thresholds to accommodate test environment differences
+- Test results are saved as artifacts for later inspection
+
+To view GitHub Actions results:
+1. Go to your repository on GitHub
+2. Click on the "Actions" tab
+3. Find the most recent workflow run
+4. Download and inspect test results artifacts

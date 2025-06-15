@@ -1,0 +1,65 @@
+name: K6 Performance Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  k6-performance-tests:
+    name: Run K6 Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      
+      - name: Install K6
+        run: |
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+      
+      - name: Create results directory
+        run: mkdir -p results
+      
+      - name: Make validate-results.js executable
+        run: chmod +x validate-results.js
+      
+      - name: Run Basic Test
+        run: |
+          echo "Running basic test with CI configuration"
+          k6 run --out json=results/basic-test-result.json dummyjson-test.js --duration 30s --vus 5
+        
+      - name: Run Advanced Test
+        run: |
+          echo "Running advanced test with CI configuration"
+          k6 run --out json=results/advanced-test-result.json dummyjson-advanced-test.js --duration 30s --vus 5
+      
+      - name: Analyze Results
+        run: |
+          echo "Basic Test Results"
+          node analyze-results.js results/basic-test-result.json
+          echo ""
+          echo "Advanced Test Results"
+          node analyze-results.js results/advanced-test-result.json
+      
+      - name: Validate Results
+        run: |
+          echo "Validating test results against CI thresholds"
+          node validate-results.js results/basic-test-result.json --ci
+          node validate-results.js results/advanced-test-result.json --ci
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: k6-test-results
+          path: results/
+          retention-days: 7
